@@ -451,12 +451,13 @@ func (cs *clientStream) newAttemptLocked(isTransparent bool) (*csAttempt, error)
 	}
 
 	return &csAttempt{
-		ctx:           ctx,
-		beginTime:     beginTime,
-		cs:            cs,
-		dc:            cs.cc.dopts.dc,
-		statsHandlers: shs,
-		trInfo:        trInfo,
+		ctx:               ctx,
+		beginTime:         beginTime,
+		cs:                cs,
+		dc:                cs.cc.dopts.dc,
+		statsHandlers:     shs,
+		trInfo:            trInfo,
+		encoderBufferPool: cs.encoderBufferPool,
 	}, nil
 }
 
@@ -600,6 +601,8 @@ type csAttempt struct {
 	allowTransparentRetry bool
 	// set for pick errors that are returned as a status
 	drop bool
+
+	encoderBufferPool SharedBufferPool
 }
 
 func (cs *clientStream) commitAttemptLocked() {
@@ -1561,6 +1564,8 @@ type serverStream struct {
 	// It's only checked in send and sendHeader, doesn't need to be
 	// synchronized.
 	serverHeaderBinlogged bool
+
+	encoderBufferPool SharedBufferPool
 
 	mu sync.Mutex // protects trInfo.tr after the service handler runs.
 }
