@@ -1140,6 +1140,14 @@ func (s *Server) sendResponse(ctx context.Context, t transport.ServerTransport, 
 	if len(payload) > s.opts.maxSendMessageSize {
 		return status.Errorf(codes.ResourceExhausted, "grpc: trying to send message larger than max (%d vs. %d)", len(payload), s.opts.maxSendMessageSize)
 	}
+
+	encoderBufferPool := s.opts.encoderBufferPool
+	if encoderBufferPool != nil {
+		opts.OnWrittenToTransport = func() {
+			encoderBufferPool.Put(&data)
+		}
+	}
+
 	err = t.Write(stream, hdr, payload, opts)
 	if err == nil {
 		for _, sh := range s.opts.statsHandlers {
